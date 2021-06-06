@@ -2,226 +2,299 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct node {
-   int value; // значение, которое хранит узел
-   struct node *next; // ссылка на следующий элемент списка
-   } node;
+typedef struct node 
+{
+	int value;          // значение, которое хранит узел 
+	struct node *next;  // ссылка на следующий элемент списка
+	struct node *prev;  // ссылка на предыдущий элемент списка
+} node;
 
-typedef struct list {
-   struct node *head; // начало списка
-   } list;
+typedef struct list 
+{
+	struct node *head;  // начало списка
+	struct node *tail;  // конец списка
+} list;
 
 // инициализация пустого списка
-void init(list *l) {
-   l -> head = malloc(sizeof(node));
-   l -> head = NULL;
-   return;
-   }
+void init(list *l)
+{
+    l->head = NULL; //начало списка пусто
+    l->tail = NULL; //конец списка пуст
+}
 
 // удалить все элементы из списка
-void clean(list *l) {
-   if ( l -> head == NULL)
-   return;
-
-   node *current = l->head;
-   node *temp;
-
-   while (current) {
-   temp = current->next;
-   free(current);
-   current = temp;
-   }
-
-   l->head = NULL;
-   return;
- }
+void clean(list *l)
+{ 
+    node *temp = l->tail; //выбираем конец списка
+    if (temp == NULL) //если список пуст, то он уже очищен
+        return;
+    while (temp->prev != NULL) //пока в списке temp не единственный элемент
+    {
+        temp = temp->prev; //переходим к предыдущему элементу
+        free(temp->next); //очищаем тот, на котором только что были
+    }
+    free(temp); //очищаем память от последнего элемент
+    l->head = NULL; //указываем, что первого элемента нет
+    l->tail = NULL; //указываем, что последнего элемента нет
+}
 
 // проверка на пустоту списка
-bool is_empty(list *l) {
-   if(l -> head == NULL)
-   return true;
-   else
-   return false;
-   }
-
-   // поиск элемента по значению. вернуть NULL если эжемент не найден
-node *find(list *l, int key) {
-   node *current = l -> head;
-   if(l -> head == NULL)
-   return NULL;
-
-   while(current -> value != key) {
-   current = current -> next;
-
-   if(current == NULL)
-   return NULL;
-   }
-
-   return current;
-   }
-
-//поиск последнего эл-та
-node* find_last(list *l) {
-
-   if(l -> head == NULL)
-   return NULL;
-
-   node *current = l -> head;
-
-   while(current -> next != NULL) {
-   current = current -> next;
-   }
-   return current;
-   }
+bool is_empty(list *l)
+{
+    return (l->head == NULL); //возвращает значение условия
+}
 
 // вставка значения в конец списка, вернуть 0 если успешно
-int push_back(list *l, int key) {
-        if (is_empty(l) == false) {
-        node *last = find_last(l);
-        node *current = malloc(sizeof(node));
-        last -> next = current;
-        current -> next = NULL;
-        current -> value = key;
-        }
-        else {
-        node *current = malloc(sizeof(node));
-        current -> value = key;
-        current -> next = NULL;
-        l -> head = current;
-        }
-        return 0;
-        }
+int push_back(list *l, int value)
+{
+    node *temp = l->tail; //запоминаем конец списка
+    l->tail = malloc(sizeof(node)); //концу списка выделяем новую память
+    if (temp == NULL) //если список был пуст
+    {
+        l->head = l->tail; //начало и конец списка - один и тот же элемент
+        l->tail->next = NULL; //следующего элемента не существует
+        l->tail->prev = NULL; //предыдущего тоже
+    }
+    else //иначе
+    {
+        temp->next = l->tail; //следующий элемент от бывшего конца - это новый
+        l->tail->prev = temp; //указываем новому концу на старый
+    }
+    l->tail->value = value; //присваиваем новому элементу значение
+    return 0; //успешно
+}
 
- // вставка значения в начало списка, вернуть 0 если успешно
-int push_front(list *l, int key) {
-        node *current = malloc(sizeof(node));
-        current -> value = key;
-        current -> next = l -> head;
-        l -> head = current;
-        return 0;
-        }
+// вставка значения в начало списка, вернуть 0 если успешно
+int push_front(list *l, int value)
+{
+    node *temp = l->head; //запоминаем начало списка
+    l->head = malloc(sizeof(node)); //началу выделяем новую память
+    if (temp == NULL) //если список был пуст
+    {
+        l->tail = l->head; //начало и конец списка - один и тот же элемент
+        l->head->prev = NULL; //предыдущего элемента не существует
+        l->head->next = NULL; //следующего тоже
+    }
+    else //иначе
+    {
+        temp->prev = l->head; //предыдущий элемент от бывшего начала - это новое
+        l->head->next = temp; //указываем новому начало на старый
+    }
+    l->head->value = value; //присваиваем новому элементу значение
+    return 0; //успешно
+}
+
+// вывести все значения из списка в прямом порядке через пробел
+void print(list *l)
+{
+    node *temp = l->head; //запоминаем начало списка
+    while (temp != NULL) //пока не дойдем до несуществующего элемента
+    {
+        printf("%d ", temp->value); //печатаем значение данного элемента
+        temp = temp->next; //переходим к следующему элементу в списке
+    }
+    printf("\n"); //переходим на новую строку в консоли
+}
+
+// вывести все значения из списка в обратном порядке через пробел
+void print_invers(list *l)
+{
+    node *temp = l->tail; //запоминаем конец списка
+    while (temp != NULL) //пока текущий элемент не является несуществующим
+    {
+        printf("%d ", temp->value); //выводим значение текущего элемента
+        temp = temp->prev; //переходим к предыдущему элементу в списке
+    }
+    printf("\n"); //переходим на новую строку в консоли
+}
+
+// поиск элемента по значению. вернуть NULL если элемент не найден
+node *find(list *l, int value) 
+{
+    node *temp = l->head; //запоминаем начало списка
+    while (temp != NULL && temp->value != value) //пока не дошли до несуществующего элемента и пока не нашли нужный
+    {
+        temp = temp->next; //переходим к следующему
+    }
+    return temp; //возвращаем либо элемент с нужным значение, либо NULL
+}
+
+// поиск элемента по значению в обратную сторону
+node *find_invers(list *l, int value)
+{
+    node *temp = l->tail; //запоминаем начало списка
+    while (temp != NULL && temp->value != value) //пока не дошли до несуществующего элемента и пока не нашли нужный
+    {
+        temp = temp->prev; //переходим к предыдущему
+    }
+    return temp; //возвращаем либо элемент с нужным значение, либо NULL
+}
 
 // вставка значения после указанного узла, вернуть 0 если успешно
-int insert_after(node *n, int key) {
-        if(n == NULL)
-        return 1;
+int insert_after(list *l, node *n, int value)
+{
+    node *temp = NULL; //инициализация нового элемента
+    temp = malloc(sizeof(node)); //выделяем память новому элементу
+    temp->value = value; //присваиваем значение
+    temp->next = n->next; //указываем на следующий элемент для нового
+    temp->prev = n; //указываем на предыдущий для нового
+    n->next = temp; //новый элемент является следующим, после которого вставляется
+    if (temp->next == NULL) //если новый элемент теперь конец списка
+    {
+        l->tail = temp; //сообщаем об этом списку
+    } 
+    else //иначе
+    {
+        temp->next->prev = temp; //указываем следующему элементу, что предыдущий у него изменился
+    }
+    return 0; //успешно
+}
 
-        node *new_node = malloc(sizeof(node));
-        new_node -> value = key;
-        new_node -> next = n -> next;
-        n -> next = new_node;
-        return 0;
-        }
+// вставка значения перед указанным узлом, вернуть 0 если успешно
+int insert_before(list *l, node *n, int value)
+{
+    node *temp = NULL; //инициализация нового элемента
+    temp = malloc(sizeof(node)); //выделяем память новому элементу
+    temp->value = value; //присваиваем значение
+    temp->prev = n->prev; //указываем на предыдущий элемент для нового
+    temp->next = n; //указываем на следующий для нового
+    n->prev = temp; //новый элемент является предыдущим, до которого вставляется
+    if (temp->prev == NULL) //если новый элемент теперь конец списка
+    {
+        l->head = temp; //сообщаем об этом списку
+    } 
+    else //иначе
+    {
+        temp->prev->next = temp; //указываем предыдущему элементу, что следующий у него изменился
+    }
+    return 0; //успешно
+}
 
 // удалить первый элемент из списка с указанным значением, вернуть 0 если успешно
-int remove_node(list *l, int key) {
-        node *current = l -> head;
-        node *pre_node = NULL;
+int remove_first(list *l, int value)
+{
+    if (l->head == NULL) //если список пуст
+        return 1; //неудачно
+    node *removing = find(l, value); //находим элемент, который будет удален
+    if (removing == NULL) //если элемента с таким значением не существует
+        return 1; //неудачно
+    if (l->head == removing) //если удаляемый элемент является началом
+    {
+        l->head = l->head->next; //обновляем начало списка
+        l->head->prev = NULL; //указываем новому началу списку, что предыдущего элемента нет
+    } 
+    else if (l->tail == removing) //иначе если удаляемый элемент является концом
+    {
+        l->tail = l->tail->prev; //обновляем конец списка
+        l->tail->next = NULL; //указываем новому концу списка, что следующего элемента нет
+    } 
+    else //иначе элемент находится где-то в середине списка
+    {
+        node *temp = removing->prev; //запоминаем предыдущий элемент
+        temp->next = removing->next; //у него изменяем следующий
+        removing->next->prev = temp; //у следующего изменяем предыдущий
+    }
+    free(removing); //удаляем из памяти
+    return 0; //успешно
+}
 
-        if(l -> head == NULL)
-        return 1;
+// удалить последний элемент из списка с указанным значением, вернуть 0 если успешно
+int remove_last(list *l, int value)
+{
+    if (l->tail == NULL) //если список пуст
+        return 1; //неудачно
+    node *removing = find_invers(l, value); //находим элемент, который будет удален
+    if (removing == NULL) //если элемента с таким хначением не существует
+        return 1; //неудачно
+    if (l->tail == removing) //если удаляемый элемент является концом
+    {
+        l->tail = l->tail->prev; //обновляем конец списка
+        l->tail->next = NULL; //указываем новому концу списка, что следующего элемента нет
+    } 
+    else if (l->head == removing) //иначе если удаляемый элемент является началом
+    {
+        l->head = l->head->next; //обновляем начало списка
+        l->head->prev = NULL; //указываем новому началу списку, что предыдущего элемента нет
+    } 
+    else //иначе элемент находится где-то в середине списка
+    {
+        node *temp = removing->next; //запоминаем следующий элемент
+        temp->prev = removing->prev; //у него изменяем следующий
+        removing->prev->next = temp; //у следующего изменяем предыдущий
+    }
+    free(removing); //удаляем из памяти
+    return 0; //успешно
+}
 
-        while(current -> value != key) {
-        if(current -> next == NULL)
-        return 1;
-	else {
-        pre_node = current;
-        current = current -> next;
-        }
-        }
-        if(current == l -> head) {
-        l -> head = l -> head -> next;
-        }
-        else {
-        pre_node -> next = current -> next;
-        }
-        free(current);
-        return 0;
-        }
 
-// вывести все значения из списка в прямом порядке через пробел,
-// после окончания вывода перейти на новую строку
-void print(list *l) {
-        node *current = l -> head;
-        if (current == NULL)
-        return;
-
-        while(current != NULL) {
-        printf("%d ", current-> value);
-        current = current -> next;
-        }
-        printf("\n");
-        return;
-        }
-
-node *index_finder(list *l, int index) {
-        if(l -> head == NULL)
-        return NULL;
-
-        node *current = l -> head;
-        int index_counter = 0;
-
-        while(index_counter != index) {
-        current = current -> next;
-
-        if(current == NULL)
-        return NULL;
-
-        index_counter++;
-        }
-        return current;
-        }
-
-int main() {
-        int n, m, t, j, x, z, a;
-        (void) scanf("%d", &n);
-        list *l_main;
-        l_main = malloc(sizeof(list));
-        init(l_main);
-
-	/*заполнение списка*/
-        for(int i = 1; i <= n; i++) {
-        (void) scanf("%d", &a);
-        push_back(l_main, a);
-        }
-        print(l_main);
-
-	/*нахождение Ki*/
-	int k;
-	list* num = (list*)malloc(sizeof(list));
-	for (int i = 0; i < 3; i++) {
-	scanf("%d",&k);
-
-	if (find(l_main, k)== NULL)
-	push_back(num, 0);
-	else
-	push_back(num, 1);
-	}
-	print(num);
-
-	/*вставка в конец*/
-        (void)scanf("%d", &m);
-        push_back(l_main, m);
-        print(l_main);
-
-	/*вставка в начало*/
-        (void)scanf("%d", &t);
-        push_front(l_main, t);
-        print(l_main);
-
-	/*вставка после*/
-        (void) scanf("%d %d", &j, &x);
-        node *find_node = index_finder(l_main, j - 1);
-        insert_after(find_node, x);
-        print(l_main);
-
-	/*удаление первого хранящего z */
-        (void) scanf("%d", &z);
-        remove_node(l_main, z);
-        print(l_main);
-
-        clean(l_main);
-        l_main -> head = NULL;
-        return 0;
-        }
+int main() 
+{
+    //1
+    int n; 
+    scanf("%d", &n); //ввод количества элементов
+    //2
+    list *l = NULL; 
+    l = malloc(sizeof(list)); //выделение памяти
+    init(l); //инициализация
+    int i, a;
+    for (i = 0; i < n; i++) 
+    {
+        scanf("%d", &a); //ввод элемента
+        push_back(l, a); //добавление элемента в список
+    }
+    //3
+    print(l); //прямой вывод списка
+    //4
+    int k1, k2, k3; //элементы, которые будут проверяться на наличие в списке
+    scanf("%d %d %d", &k1, &k2, &k3);
+    k1 = (find(l, k1) != NULL)? 1 : 0; //при нахождении k1 в списке значение будет 1, иначе 0
+    k2 = (find(l, k2) != NULL)? 1 : 0;
+    k3 = (find(l, k3) != NULL)? 1 : 0;
+    printf("%d %d %d\n", k1, k2, k3); //вывод этих значений
+    //5
+    int m; 
+    scanf("%d", &m); //ввод числа, которое будет добавлено в конец списка
+    push_back(l, m); //добавление числа в конец списка
+    //6
+    print_invers(l); //обратный вывод списка 
+    //7
+    int t;
+    scanf("%d", &t); //ввод числа, которое будет добавлено в начало списка
+    push_front(l, t); //добавление числа в начало списка
+    //8
+    print(l); //прямой вывод списка
+    //9
+    int j, x; 
+    scanf("%d %d", &j, &x); //вставить x элемент после j-го
+    node *temp = l->head; //запоминаем первый элемент
+    for (i = 1; i < j; i++) //доходим до j-го
+        temp = temp->next;
+    insert_after(l, temp, x); //вставляем элемент со значением x после j-го
+    //10
+    print_invers(l); //обратный вывод списка
+    //11
+    int u, y;
+    scanf("%d %d", &u, &y); //вставить y элемент после u-го
+    temp = l->head; //запоминаем первый элемент
+    for (i = 1; i < u; i++) //доходим до u-го
+        temp = temp->next;
+    insert_before(l, temp, y); //вставляем элемент со значением y после u-го
+    //12
+    print(l); //прямой вывод списка
+    //13
+    int z; 
+    scanf("%d", &z); //ввод значения элемента, который будет удален с начала списка
+    remove_first(l, z); //удаление первого элемента со значением z
+    //14
+    print_invers(l); //обратный вывод списка
+    //15
+    int r;
+    scanf("%d", &r); //ввод значения элемента, который будет удален с конца списка
+    remove_last(l, r); //удаление первого элемента со значением r
+    //16
+    print(l); //прямой вывод списка
+    //17
+    clean(l); //очистка списка
+    return 0;
+}
 
